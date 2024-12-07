@@ -23,7 +23,7 @@ interface User {
   id: number;
   name: string;
   email: string;
-  role: "doctor" | "super_admin";
+  role: "doctor" | "admin";
 }
 
 const initialUsers: User[] = [
@@ -37,25 +37,7 @@ const initialUsers: User[] = [
     id: 2,
     name: "Jane Smith",
     email: "jane.smith@example.com",
-    role: "super_admin",
-  },
-  {
-    id: 3,
-    name: "Dr. Alice Johnson",
-    email: "alice.johnson@example.com",
-    role: "doctor",
-  },
-  {
-    id: 4,
-    name: "Bob Brown",
-    email: "bob.brown@example.com",
-    role: "super_admin",
-  },
-  {
-    id: 5,
-    name: "Dr. Charlie Davis",
-    email: "charlie.davis@example.com",
-    role: "doctor",
+    role: "admin",
   },
 ];
 
@@ -69,10 +51,7 @@ export function UserRoleManagement() {
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleRoleChange = (
-    userId: number,
-    newRole: "doctor" | "super_admin"
-  ) => {
+  const handleRoleChange = (userId: number, newRole: "doctor" | "admin") => {
     setUsers(
       users.map((user) =>
         user.id === userId ? { ...user, role: newRole } : user
@@ -107,7 +86,7 @@ export function UserRoleManagement() {
               <TableCell>
                 <Select
                   value={user.role}
-                  onValueChange={(value: "doctor" | "super_admin") =>
+                  onValueChange={(value: "doctor" | "admin") =>
                     handleRoleChange(user.id, value)
                   }
                 >
@@ -115,8 +94,8 @@ export function UserRoleManagement() {
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="doctor">Doctor (Admin)</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                    <SelectItem value="doctor">Doctor</SelectItem>
+                    <SelectItem value="super_admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </TableCell>
