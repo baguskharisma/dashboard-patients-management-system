@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Users, UserPlus, UserCheck, Activity } from "lucide-react";
 import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
@@ -9,6 +9,27 @@ import { RecentPatients } from "@/components/recent-patients";
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [stats, setStats] = useState({
+    totalPatients: 0,
+    newPatients: 0,
+    appointments: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch("/api/stat"); // Pastikan endpoint benar
+        const data = await response.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -20,26 +41,21 @@ export default function Dashboard() {
             <h3 className="text-gray-700 text-2xl font-medium mb-4 lg:text-3xl">
               Dashboard
             </h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <StatCard
                 title="Total Patients"
-                value="1,234"
+                value={stats.totalPatients.toLocaleString()}
                 icon={<Users className="h-4 w-4 text-muted-foreground" />}
               />
               <StatCard
                 title="New Patients"
-                value="42"
+                value={stats.newPatients.toLocaleString()}
                 icon={<UserPlus className="h-4 w-4 text-muted-foreground" />}
               />
               <StatCard
                 title="Appointments"
-                value="18"
+                value={stats.appointments.toLocaleString()}
                 icon={<UserCheck className="h-4 w-4 text-muted-foreground" />}
-              />
-              <StatCard
-                title="Active Cases"
-                value="76"
-                icon={<Activity className="h-4 w-4 text-muted-foreground" />}
               />
             </div>
             <div className="mt-6 lg:mt-8">

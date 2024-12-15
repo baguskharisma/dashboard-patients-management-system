@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 interface NewUser {
   name: string;
   email: string;
-  role: "doctor" | "super_admin";
+  role: "Doctor" | "Admin";
   password: string;
 }
 
@@ -24,29 +24,53 @@ export function AddUserForm() {
   const [newUser, setNewUser] = useState<NewUser>({
     name: "",
     email: "",
-    role: "doctor",
+    role: "Doctor",
     password: "",
   });
 
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log("New user:", newUser);
-    toast({
-      title: "User Added",
-      description: `${newUser.name} has been added as a ${
-        newUser.role === "doctor" ? "Doctor (Admin)" : "Super Admin"
-      }.`,
-    });
-    // Reset form
-    setNewUser({
-      name: "",
-      email: "",
-      role: "doctor",
-      password: "",
-    });
+
+    try {
+      const response = await fetch("/api/add-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newUser),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: errorData.error || "Failed to add user",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const createdUser = await response.json();
+      toast({
+        title: "User Added",
+        description: `${createdUser.name} has been added as a ${createdUser.role}.`,
+      });
+
+      // Reset form
+      setNewUser({
+        name: "",
+        email: "",
+        role: "Doctor",
+        password: "",
+      });
+    } catch (error) {
+      console.error("Error parsing response:", error);
+      toast({
+        title: "Error",
+        description: "Failed to parse response.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,7 +108,7 @@ export function AddUserForm() {
         <Label htmlFor="role">Role</Label>
         <Select
           value={newUser.role}
-          onValueChange={(value: "doctor" | "super_admin") =>
+          onValueChange={(value: "Doctor" | "Admin") =>
             setNewUser((prev) => ({ ...prev, role: value }))
           }
         >
@@ -92,8 +116,8 @@ export function AddUserForm() {
             <SelectValue placeholder="Select a role" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="doctor">Doctor (Admin)</SelectItem>
-            <SelectItem value="super_admin">Super Admin</SelectItem>
+            <SelectItem value="Doctor">Doctor</SelectItem>
+            <SelectItem value="Admin">Admin</SelectItem>
           </SelectContent>
         </Select>
       </div>

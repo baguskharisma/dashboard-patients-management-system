@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -23,46 +21,69 @@ interface User {
   id: number;
   name: string;
   email: string;
-  role: "doctor" | "admin";
+  role: "Doctor" | "Admin";
 }
 
-const initialUsers: User[] = [
-  {
-    id: 1,
-    name: "Dr. John Doe",
-    email: "john.doe@example.com",
-    role: "doctor",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    role: "admin",
-  },
-];
-
 export function UserRoleManagement() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch(`/api/users/search?search=${searchTerm}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch users");
+        }
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
 
-  const handleRoleChange = (userId: number, newRole: "doctor" | "admin") => {
-    setUsers(
-      users.map((user) =>
-        user.id === userId ? { ...user, role: newRole } : user
-      )
-    );
+    fetchUsers();
+  }, [searchTerm]);
+
+  const handleRoleChange = async (
+    userId: number,
+    newRole: "Doctor" | "Admin"
+  ) => {
+    try {
+      // Optimistic UI update
+      setUsers(
+        users.map((user) =>
+          user.id === userId ? { ...user, role: newRole } : user
+        )
+      );
+
+      const response = await fetch("/api/users/role", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, newRole }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update role");
+      }
+
+      const updatedUser = await response.json();
+      console.log("Role updated:", updatedUser);
+    } catch (error) {
+      console.error("Error updating role:", error);
+      // Rollback UI update if API call fails
+      setUsers(
+        users.map((user) =>
+          user.id === userId ? { ...user, role: user.role } : user
+        )
+      );
+    }
   };
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
       <div className="mb-4">
-        <Label htmlFor="search">Search Users</Label>
         <Input
           id="search"
           placeholder="Search by name or email"
@@ -79,14 +100,14 @@ export function UserRoleManagement() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredUsers.map((user) => (
+          {users.map((user) => (
             <TableRow key={user.id}>
               <TableCell>{user.name}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>
                 <Select
                   value={user.role}
-                  onValueChange={(value: "doctor" | "admin") =>
+                  onValueChange={(value: "Doctor" | "Admin") =>
                     handleRoleChange(user.id, value)
                   }
                 >
@@ -94,8 +115,8 @@ export function UserRoleManagement() {
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="doctor">Doctor</SelectItem>
-                    <SelectItem value="super_admin">Admin</SelectItem>
+                    <SelectItem value="Doctor">Doctor</SelectItem>
+                    <SelectItem value="Admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </TableCell>

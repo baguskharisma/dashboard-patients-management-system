@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,28 +12,80 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface Patient {
+  id: number;
+  name: string;
+}
+
 interface NewAppointmentFormProps {
   onClose: () => void;
 }
 
 export function NewAppointmentForm({ onClose }: NewAppointmentFormProps) {
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [formData, setFormData] = useState({
-    patientName: "",
+    patientId: "",
     date: "",
     time: "",
     type: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch patients when the component mounts
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const response = await fetch("/api/patients?page=1&perPage=100");
+        if (!response.ok) {
+          throw new Error("Failed to fetch patients");
+        }
+        const data = await response.json();
+        const patients = data.patients.map((patient: any) => ({
+          id: patient.id,
+          name: `${patient.firstName} ${patient.lastName}`,
+        }));
+        setPatients(patients);
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+      }
+    };
+
+    fetchPatients();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log("New appointment:", formData);
-    onClose();
-  };
+    setIsSubmitting(true);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    try {
+      const response = await fetch("/api/add-appointment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date: formData.date,
+          time: formData.time,
+          type: formData.type.toUpperCase(), // Pastikan sesuai enum di schema
+          patientId: Number(formData.patientId), // Kirim ID pasien
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create appointment");
+      }
+
+      const result = await response.json();
+      console.log("Appointment created:", result);
+
+      // Tutup form setelah berhasil
+      onClose();
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      alert("Failed to create appointment. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -43,14 +95,23 @@ export function NewAppointmentForm({ onClose }: NewAppointmentFormProps) {
     >
       <h2 className="text-xl font-semibold mb-4">New Appointment</h2>
       <div>
-        <Label htmlFor="patientName">Patient Name</Label>
-        <Input
-          id="patientName"
-          name="patientName"
-          value={formData.patientName}
-          onChange={handleChange}
-          required
-        />
+        <Label htmlFor="patientId">Patient Name</Label>
+        <Select
+          onValueChange={(value) =>
+            setFormData((prev) => ({ ...prev, patientId: value }))
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a patient" />
+          </SelectTrigger>
+          <SelectContent>
+            {patients.map((patient) => (
+              <SelectItem key={patient.id} value={String(patient.id)}>
+                {patient.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <Label htmlFor="date">Date</Label>
@@ -59,7 +120,9 @@ export function NewAppointmentForm({ onClose }: NewAppointmentFormProps) {
           name="date"
           type="date"
           value={formData.date}
-          onChange={handleChange}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, date: e.target.value }))
+          }
           required
         />
       </div>
@@ -70,7 +133,9 @@ export function NewAppointmentForm({ onClose }: NewAppointmentFormProps) {
           name="time"
           type="time"
           value={formData.time}
-          onChange={handleChange}
+          onChange={(e) =>
+            setFormData((prev) => ({ ...prev, time: e.target.value }))
+          }
           required
         />
       </div>
@@ -86,19 +151,24 @@ export function NewAppointmentForm({ onClose }: NewAppointmentFormProps) {
             <SelectValue placeholder="Select appointment type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="check-up">Check-up</SelectItem>
-            <SelectItem value="dental-cleaning">Dental Cleaning</SelectItem>
-            <SelectItem value="consultation">Consultation</SelectItem>
-            <SelectItem value="follow-up">Follow-up</SelectItem>
-            <SelectItem value="x-ray">X-Ray</SelectItem>
+            <SelectItem value="CHECK_UP">Check-up</SelectItem>
+            <SelectItem value="CONSULTATION">Consultation</SelectItem>
+            <SelectItem value="FOLLOW_UP">Follow-up</SelectItem>
           </SelectContent>
         </Select>
       </div>
       <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onClose}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
-        <Button type="submit">Create Appointment</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Create Appointment"}
+        </Button>
       </div>
     </form>
   );

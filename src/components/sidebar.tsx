@@ -1,4 +1,12 @@
-import { Home, Users, Calendar, FileText, Settings, X } from "lucide-react";
+import {
+  Home,
+  Users,
+  Calendar,
+  FileText,
+  Settings,
+  X,
+  FileIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,6 +25,7 @@ export function Sidebar({
     { href: "/patients", label: "Patients", icon: Users },
     { href: "/appointments", label: "Appointments", icon: Calendar },
     { href: "/records", label: "Records", icon: FileText },
+    { href: "/invoices", label: "Invoices", icon: FileIcon },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 

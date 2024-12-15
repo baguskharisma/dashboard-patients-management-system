@@ -1,19 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 interface NewRecord {
-  patientName: string;
-  dateOfBirth: string;
-  gender: string;
-  contactNumber: string;
-  email: string;
-  address: string;
+  patientId: string;
   medicalHistory: string;
   currentMedications: string;
   allergies: string;
@@ -21,36 +23,86 @@ interface NewRecord {
   nextAppointment: string;
 }
 
+interface Patient {
+  id: number;
+  name: string;
+}
+
 interface AddRecordFormProps {
   onClose: () => void;
 }
 
 export function AddRecordForm({ onClose }: AddRecordFormProps) {
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [newRecord, setNewRecord] = useState<NewRecord>({
-    patientName: "",
-    dateOfBirth: "",
-    gender: "",
-    contactNumber: "",
-    email: "",
-    address: "",
+    patientId: "",
     medicalHistory: "",
     currentMedications: "",
     allergies: "",
     lastVisit: "",
     nextAppointment: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch patients when the component mounts
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const response = await fetch("/api/patients?page=1&perPage=100");
+        if (!response.ok) {
+          throw new Error("Failed to fetch patients");
+        }
+        const data = await response.json();
+        const patients = data.patients.map((patient: any) => ({
+          id: patient.id,
+          name: `${patient.firstName} ${patient.lastName}`,
+        }));
+        setPatients(patients);
+      } catch (error) {
+        console.error("Error fetching patients:", error);
+      }
+    };
+
+    fetchPatients();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend
-    console.log("New record:", newRecord);
-    toast({
-      title: "Record Added",
-      description: `New record for ${newRecord.patientName} has been added.`,
-    });
-    onClose();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/add-record", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          patientId: Number(newRecord.patientId),
+          medicalHistory: newRecord.medicalHistory,
+          currentMedications: newRecord.currentMedications,
+          allergies: newRecord.allergies,
+          lastVisit: newRecord.lastVisit,
+          nextAppointment: newRecord.nextAppointment,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create appointment");
+      }
+
+      const result = await response.json();
+      console.log("Appointment created:", result);
+
+      // Tutup form setelah berhasil
+      onClose();
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      alert("Failed to create appointment. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
@@ -69,65 +121,22 @@ export function AddRecordForm({ onClose }: AddRecordFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="patientName">Patient Name</Label>
-          <Input
-            id="patientName"
-            name="patientName"
-            value={newRecord.patientName}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="dateOfBirth">Date of Birth</Label>
-          <Input
-            id="dateOfBirth"
-            name="dateOfBirth"
-            type="date"
-            value={newRecord.dateOfBirth}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="gender">Gender</Label>
-          <Input
-            id="gender"
-            name="gender"
-            value={newRecord.gender}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="contactNumber">Contact Number</Label>
-          <Input
-            id="contactNumber"
-            name="contactNumber"
-            value={newRecord.contactNumber}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            value={newRecord.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="address">Address</Label>
-          <Input
-            id="address"
-            name="address"
-            value={newRecord.address}
-            onChange={handleChange}
-            required
-          />
+          <Select
+            onValueChange={(value) => {
+              setNewRecord((prev) => ({ ...prev, patientId: value }));
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a patient" />
+            </SelectTrigger>
+            <SelectContent>
+              {patients.map((patient) => (
+                <SelectItem key={patient.id} value={String(patient.id)}>
+                  {patient.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div>

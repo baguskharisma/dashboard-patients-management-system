@@ -1,13 +1,45 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+"use client";
 
-const recentPatients = [
-  { name: "John Doe", date: "2023-06-01", status: "Checked-in" },
-  { name: "Jane Smith", date: "2023-06-02", status: "Appointment" },
-  { name: "Bob Johnson", date: "2023-06-03", status: "Discharged" },
-];
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+interface Patient {
+  name: string;
+  date: string;
+  status: string;
+}
 
 export function RecentPatients() {
+  const [recentPatients, setRecentPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPatients() {
+      try {
+        const response = await fetch("/api/recent-patients");
+        const data = await response.json();
+        setRecentPatients(
+          data.map((patient: any) => ({
+            name: `${patient.firstName} ${patient.lastName}`,
+            date: new Date(patient.createdAt).toLocaleDateString(),
+            status: "Completed", // You can modify status display if needed
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching recent patients:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPatients();
+  }, []);
+
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -17,9 +49,9 @@ export function RecentPatients() {
         <div className="space-y-4">
           {recentPatients.map((patient, index) => (
             <div key={index} className="flex items-center space-x-4">
-              <Avatar>
+              {/* <Avatar>
                 <AvatarFallback>{patient.name[0]}</AvatarFallback>
-              </Avatar>
+              </Avatar> */}
               <div>
                 <p className="font-medium">{patient.name}</p>
                 <p className="text-sm text-gray-500">{patient.date}</p>

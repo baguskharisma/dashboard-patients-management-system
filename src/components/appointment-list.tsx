@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -11,65 +11,56 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
-
 interface Appointment {
   id: number;
   patientName: string;
   date: Date;
   time: string;
-  type: string;
-  status: "Scheduled" | "Completed" | "Cancelled";
+  type: "CHECK_UP" | "CONSULTATION" | "FOLLOW_UP";
+  status: "SCHEDULED" | "COMPLETED" | "CANCELED";
 }
 
-const initialAppointments: Appointment[] = [
-  {
-    id: 1,
-    patientName: "John Doe",
-    date: new Date(2023, 5, 15),
-    time: "09:00 AM",
-    type: "Check-up",
-    status: "Scheduled",
-  },
-  {
-    id: 2,
-    patientName: "Jane Smith",
-    date: new Date(2023, 5, 16),
-    time: "02:00 PM",
-    type: "Dental Cleaning",
-    status: "Scheduled",
-  },
-  {
-    id: 3,
-    patientName: "Alice Johnson",
-    date: new Date(2023, 5, 14),
-    time: "11:00 AM",
-    type: "Follow-up",
-    status: "Completed",
-  },
-  {
-    id: 4,
-    patientName: "Bob Brown",
-    date: new Date(2023, 5, 17),
-    time: "10:30 AM",
-    type: "Consultation",
-    status: "Scheduled",
-  },
-  {
-    id: 5,
-    patientName: "Charlie Davis",
-    date: new Date(2023, 5, 13),
-    time: "03:30 PM",
-    type: "X-Ray",
-    status: "Cancelled",
-  },
-];
+const appointmentTypeMap = {
+  CHECK_UP: "Check up",
+  CONSULTATION: "Consultation",
+  FOLLOW_UP: "Follow up",
+};
+
+const appointmentStatusMap = {
+  SCHEDULED: "Scheduled",
+  COMPLETED: "Completed",
+  CANCELED: "Canceled",
+};
 
 export function AppointmentList() {
-  const [appointments, setAppointments] =
-    useState<Appointment[]>(initialAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const response = await fetch("/api/appointments");
+        const data = await response.json();
+        const mappedData = data.map((appointment: any) => ({
+          ...appointment,
+          type: appointmentTypeMap[
+            appointment.type as keyof typeof appointmentTypeMap
+          ],
+          status:
+            appointmentStatusMap[
+              appointment.status as keyof typeof appointmentStatusMap
+            ],
+        }));
+        setAppointments(mappedData);
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchAppointments();
+  }, []);
 
   const filteredAppointments = appointments.filter(
     (appointment) =>
@@ -79,20 +70,47 @@ export function AppointmentList() {
       appointment.type.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleStatusChange = (id: number, newStatus: Appointment["status"]) => {
-    setAppointments(
-      appointments.map((appointment) =>
-        appointment.id === id
-          ? { ...appointment, status: newStatus }
-          : appointment
-      )
-    );
+  const handleStatusChange = async (
+    id: number,
+    newStatus: Appointment["status"]
+  ) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        // console.error("Error updating status:", errorData);
+        alert(`Failed to update status: ${errorData.error}`);
+        return;
+      }
+
+      const updatedAppointment = await response.json();
+
+      // Update state dengan data terbaru
+      setAppointments((prevAppointments) =>
+        prevAppointments.map((appointment) =>
+          appointment.id === id
+            ? { ...appointment, status: updatedAppointment.status }
+            : appointment
+        )
+      );
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("An unexpected error occurred.");
+    }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div>
       <div className="mb-4">
-        <Label htmlFor="search">Search Appointments</Label>
         <Input
           id="search"
           placeholder="Search by patient name or appointment type"
@@ -123,26 +141,17 @@ export function AppointmentList() {
                 <div className="flex space-x-2">
                   <Button
                     size="sm"
-                    variant={
-                      appointment.status === "Completed"
-                        ? "secondary"
-                        : "default"
-                    }
                     onClick={() =>
-                      handleStatusChange(appointment.id, "Completed")
+                      handleStatusChange(appointment.id, "COMPLETED")
                     }
                   >
                     Complete
                   </Button>
                   <Button
                     size="sm"
-                    variant={
-                      appointment.status === "Cancelled"
-                        ? "secondary"
-                        : "default"
-                    }
+                    className="bg-transparent border border-black text-black hover:bg-transparent"
                     onClick={() =>
-                      handleStatusChange(appointment.id, "Cancelled")
+                      handleStatusChange(appointment.id, "CANCELED")
                     }
                   >
                     Cancel
