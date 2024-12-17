@@ -20,6 +20,14 @@ interface InvoiceDetailsDialogProps {
   onClose: () => void;
 }
 
+function formatDate(date: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(date));
+}
+
 export function InvoiceDetailsDialog({
   invoice,
   isOpen,
@@ -44,11 +52,11 @@ export function InvoiceDetailsDialog({
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Date</Label>
-            <div className="col-span-3">{invoice.date}</div>
+            <div className="col-span-3">{formatDate(invoice.date)}</div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Amount</Label>
-            <div className="col-span-3">${invoice.amount.toFixed(2)}</div>
+            <div className="col-span-3">Rp {invoice.amount}</div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Description</Label>

@@ -73,7 +73,6 @@ enum Status {
 
 model Invoice {
   id          Int      @id @default(autoincrement())
-  name        String
   date        DateTime
   amount      Decimal
   description String
@@ -96,4 +95,13 @@ model Record {
   patient     Patient @relation(fields: [patientId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  date      DateTime
+  isRead    Boolean  @default(false) // Menambahkan kolom isRead
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

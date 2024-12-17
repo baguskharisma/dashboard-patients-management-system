@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -21,62 +21,26 @@ interface Invoice {
   description: string;
 }
 
-const invoices: Invoice[] = [
-  {
-    id: "1",
-    patientName: "John Doe",
-    date: "2023-06-01",
-    amount: 150.0,
-    description: "General checkup",
-  },
-  {
-    id: "2",
-    patientName: "Jane Smith",
-    date: "2023-06-02",
-    amount: 200.0,
-    description: "Dental cleaning",
-  },
-  {
-    id: "3",
-    patientName: "Bob Johnson",
-    date: "2023-06-03",
-    amount: 100.0,
-    description: "Follow-up consultation",
-  },
-  {
-    id: "4",
-    patientName: "Alice Brown",
-    date: "2023-06-04",
-    amount: 175.0,
-    description: "Blood test",
-  },
-  {
-    id: "5",
-    patientName: "Charlie Wilson",
-    date: "2023-06-05",
-    amount: 225.0,
-    description: "X-ray examination",
-  },
-  {
-    id: "6",
-    patientName: "Charles Leclerc",
-    date: "2023-06-01",
-    amount: 225.0,
-    description: "X-ray examination",
-  },
-];
-
 export function InvoiceList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const invoicesPerPage = 5;
 
-  const filteredInvoices = invoices.filter(
-    (invoice) =>
-      invoice.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.id.includes(searchTerm)
+  // Load invoices from API
+  useEffect(() => {
+    async function fetchInvoices() {
+      const response = await fetch("/api/invoices");
+      const data = await response.json();
+      setInvoices(data);
+    }
+    fetchInvoices();
+  }, []);
+
+  const filteredInvoices = invoices.filter((invoice) =>
+    invoice.patientName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const indexOfLastInvoice = currentPage * invoicesPerPage;
@@ -88,8 +52,11 @@ export function InvoiceList() {
 
   const totalPages = Math.ceil(filteredInvoices.length / invoicesPerPage);
 
-  const handleViewDetails = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
+  // Fetch invoice details
+  const handleViewDetails = async (id: string) => {
+    const response = await fetch(`/api/invoices/${id}`);
+    const data = await response.json();
+    setSelectedInvoice(data);
     setIsDetailsOpen(true);
   };
 
@@ -120,11 +87,11 @@ export function InvoiceList() {
               <TableCell>{invoice.id}</TableCell>
               <TableCell>{invoice.patientName}</TableCell>
               <TableCell>{invoice.date}</TableCell>
-              <TableCell>${invoice.amount.toFixed(2)}</TableCell>
+              <TableCell>Rp {invoice.amount.toLocaleString("id-ID")}</TableCell>
               <TableCell>
                 <Button
                   variant="ghost"
-                  onClick={() => handleViewDetails(invoice)}
+                  onClick={() => handleViewDetails(invoice.id)}
                 >
                   View Details
                 </Button>
@@ -135,7 +102,7 @@ export function InvoiceList() {
       </Table>
       <div className="flex justify-between items-center mt-4">
         <div>
-          Showing {indexOfFirstInvoice + 1}-
+          Showing {indexOfFirstInvoice + 1}-{" "}
           {Math.min(indexOfLastInvoice, filteredInvoices.length)} of{" "}
           {filteredInvoices.length}
         </div>
