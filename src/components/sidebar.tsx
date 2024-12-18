@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Home,
   Users,
@@ -10,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export function Sidebar({
   isOpen,
@@ -19,8 +22,29 @@ export function Sidebar({
   onClose: () => void;
 }) {
   const pathname = usePathname();
+  const [userRole, setUserRole] = useState<number | null>(null);
 
-  const links = [
+  useEffect(() => {
+    // Try to get the role from the token
+    const token = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("token="))
+      ?.split("=")[1];
+
+    if (token) {
+      try {
+        // Decode the token (you'll need to install jwt-decode)
+        const base64Url = token.split(".")[1];
+        const base64 = base64Url.replace("-", "+").replace("_", "/");
+        const payload = JSON.parse(window.atob(base64));
+        setUserRole(payload.role);
+      } catch (error) {
+        console.error("Error decoding token", error);
+      }
+    }
+  }, []);
+
+  const doctorLinks = [
     { href: "/", label: "Dashboard", icon: Home },
     { href: "/patients", label: "Patients", icon: Users },
     { href: "/appointments", label: "Appointments", icon: Calendar },
@@ -28,6 +52,17 @@ export function Sidebar({
     { href: "/invoices", label: "Invoices", icon: FileIcon },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
+
+  const adminLinks = [
+    { href: "/", label: "Dashboard", icon: Home },
+    { href: "/patients", label: "Patients", icon: Users },
+    { href: "/appointments", label: "Appointments", icon: Calendar },
+    { href: "/records", label: "Records", icon: FileText },
+    { href: "/invoices", label: "Invoices", icon: FileIcon },
+  ];
+
+  // Determine which links to show based on user role
+  const linksToRender = userRole === 2 ? doctorLinks : adminLinks;
 
   return (
     <aside
@@ -42,7 +77,7 @@ export function Sidebar({
         </Button>
       </div>
       <nav className="space-y-2 lg:mt-16">
-        {links.map((link) => (
+        {linksToRender.map((link) => (
           <Button
             key={link.href}
             variant={pathname === link.href ? "secondary" : "ghost"}

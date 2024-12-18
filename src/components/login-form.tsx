@@ -38,7 +38,7 @@ export function LoginForm() {
           title: "Login Successful",
           description: "Welcome back to the Patient Management System.",
         });
-        router.push("/dashboard");
+        router.push("/");
       } else {
         const data = await response.json();
         throw new Error(data.message || "Login failed");
@@ -94,9 +94,6 @@ export function LoginForm() {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <Button variant="link">Forgot password?</Button>
-      </CardFooter>
     </Card>
   );
 }
