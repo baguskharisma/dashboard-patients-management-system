@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { EditRecordDialog } from "./edit-record-dialog";
+import { useAuth } from "@/hooks/use-auth";
+import { Pencil } from "lucide-react";
 
 interface RecordDetailsProps {
   recordId: number;
@@ -26,7 +29,8 @@ interface RecordData {
 
 export function RecordDetails({ recordId }: RecordDetailsProps) {
   const [record, setRecord] = useState<RecordData | null>(null);
-  // const [isEditing, setIsEditing] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const { canEditRecords } = useAuth();
 
   useEffect(() => {
     // Fetch data from API when recordId changes
@@ -46,19 +50,26 @@ export function RecordDetails({ recordId }: RecordDetailsProps) {
     fetchRecord();
   }, [recordId]);
 
+  const handleSaveEdit = (updatedRecord: any) => {
+    // Update local state
+    setRecord((prev) => prev ? { ...prev, ...updatedRecord } : null);
+  };
+
   if (!record) {
     return <div className="bg-white p-6 rounded-lg shadow">Loading...</div>;
   }
 
-  // const handleSave = () => {
-  //   // Here you would typically send the updated record to your backend
-  //   console.log("Saving record:", record);
-  //   setIsEditing(false);
-  // };
-
   return (
     <div className="bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4">Patient Record</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Patient Record</h2>
+        {canEditRecords && (
+          <Button onClick={() => setIsEditOpen(true)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit Record
+          </Button>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="patientName">Patient Name</Label>
@@ -109,6 +120,24 @@ export function RecordDetails({ recordId }: RecordDetailsProps) {
           <Input id="nextAppointment" value={record.nextAppointment} disabled />
         </div>
       </div>
+
+      <EditRecordDialog
+        record={
+          record
+            ? {
+                id: record.id,
+                medicalHistory: record.medicalHistory,
+                currentMedications: record.currentMedications,
+                allergies: record.allergies,
+                lastVisit: record.lastVisit,
+                nextAppointment: record.nextAppointment,
+              }
+            : null
+        }
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 }

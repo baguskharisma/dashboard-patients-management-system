@@ -8,6 +8,7 @@ import {
   Settings,
   X,
   FileIcon,
+  Pill,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -49,6 +50,7 @@ export function Sidebar({
     { href: "/patients", label: "Patients", icon: Users },
     { href: "/appointments", label: "Appointments", icon: Calendar },
     { href: "/records", label: "Records", icon: FileText },
+    { href: "/prescriptions", label: "Prescriptions", icon: Pill },
     { href: "/invoices", label: "Invoices", icon: FileIcon },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
@@ -58,6 +60,7 @@ export function Sidebar({
     { href: "/patients", label: "Patients", icon: Users },
     { href: "/appointments", label: "Appointments", icon: Calendar },
     { href: "/records", label: "Records", icon: FileText },
+    { href: "/prescriptions", label: "Prescriptions", icon: Pill },
     { href: "/invoices", label: "Invoices", icon: FileIcon },
   ];
 

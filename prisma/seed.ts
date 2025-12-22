@@ -8,6 +8,7 @@ async function main() {
 
   // Hapus data yang ada (opsional - hati-hati di production!)
   await prisma.notification.deleteMany();
+  await prisma.prescription.deleteMany();
   await prisma.record.deleteMany();
   await prisma.invoice.deleteMany();
   await prisma.appointment.deleteMany();
@@ -206,7 +207,7 @@ async function main() {
   console.log('✅ Janji temu berhasil dibuat');
 
   // Seed Medical Records (Rekam Medis)
-  await prisma.record.create({
+  const record1 = await prisma.record.create({
     data: {
       medicalHistory: 'Hipertensi, Diabetes Tipe 2',
       currentMedications: 'Metformin 500mg, Lisinopril 10mg',
@@ -217,7 +218,7 @@ async function main() {
     },
   });
 
-  await prisma.record.create({
+  const record2 = await prisma.record.create({
     data: {
       medicalHistory: 'Asma',
       currentMedications: 'Inhaler Albuterol',
@@ -228,7 +229,7 @@ async function main() {
     },
   });
 
-  await prisma.record.create({
+  const record3 = await prisma.record.create({
     data: {
       medicalHistory: 'Operasi jantung (2020)',
       currentMedications: 'Aspirin 81mg, Atorvastatin 20mg',
@@ -239,7 +240,7 @@ async function main() {
     },
   });
 
-  await prisma.record.create({
+  const record4 = await prisma.record.create({
     data: {
       medicalHistory: 'Tidak ada',
       currentMedications: 'Tidak ada',
@@ -250,7 +251,7 @@ async function main() {
     },
   });
 
-  await prisma.record.create({
+  const record5 = await prisma.record.create({
     data: {
       medicalHistory: 'Gastritis kronis',
       currentMedications: 'Omeprazole 20mg',
@@ -319,6 +320,177 @@ async function main() {
   });
 
   console.log('✅ Tagihan berhasil dibuat');
+
+  // Seed Prescriptions (Resep Obat)
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Metformin',
+      dosage: '500mg',
+      frequency: '2x sehari',
+      duration: '30 hari',
+      instructions: 'Diminum setelah makan pagi dan makan malam',
+      status: 'ACTIVE',
+      prescribedDate: new Date('2025-09-15'),
+      patientId: pasien1.id,
+      recordId: record1.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Lisinopril',
+      dosage: '10mg',
+      frequency: '1x sehari',
+      duration: '30 hari',
+      instructions: 'Diminum pagi hari sebelum makan',
+      status: 'ACTIVE',
+      prescribedDate: new Date('2025-09-15'),
+      patientId: pasien1.id,
+      recordId: record1.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Salbutamol Inhaler',
+      dosage: '100mcg',
+      frequency: 'Sesuai kebutuhan',
+      duration: '90 hari',
+      instructions: 'Gunakan saat sesak napas, maksimal 4x sehari',
+      status: 'ACTIVE',
+      prescribedDate: new Date('2025-08-20'),
+      patientId: pasien2.id,
+      recordId: record2.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Budesonide Inhaler',
+      dosage: '200mcg',
+      frequency: '2x sehari',
+      duration: '30 hari',
+      instructions: 'Gunakan pagi dan malam, kumur mulut setelah penggunaan',
+      status: 'COMPLETED',
+      prescribedDate: new Date('2025-07-20'),
+      patientId: pasien2.id,
+      recordId: record2.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Aspirin',
+      dosage: '81mg',
+      frequency: '1x sehari',
+      duration: 'Jangka panjang',
+      instructions: 'Diminum pagi hari setelah makan',
+      status: 'ACTIVE',
+      prescribedDate: new Date('2025-01-10'),
+      patientId: pasien3.id,
+      recordId: record3.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Atorvastatin',
+      dosage: '20mg',
+      frequency: '1x sehari',
+      duration: 'Jangka panjang',
+      instructions: 'Diminum malam hari sebelum tidur',
+      status: 'ACTIVE',
+      prescribedDate: new Date('2025-01-10'),
+      patientId: pasien3.id,
+      recordId: record3.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Clopidogrel',
+      dosage: '75mg',
+      frequency: '1x sehari',
+      duration: '60 hari',
+      instructions: 'Diminum bersamaan dengan makanan',
+      status: 'EXPIRED',
+      prescribedDate: new Date('2024-08-15'),
+      patientId: pasien3.id,
+      recordId: record3.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Vitamin C',
+      dosage: '500mg',
+      frequency: '1x sehari',
+      duration: '30 hari',
+      instructions: 'Diminum pagi hari',
+      status: 'ACTIVE',
+      prescribedDate: new Date('2025-10-20'),
+      patientId: pasien4.id,
+      recordId: record4.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Omeprazole',
+      dosage: '20mg',
+      frequency: '1x sehari',
+      duration: '30 hari',
+      instructions: 'Diminum 30 menit sebelum makan pagi',
+      status: 'ACTIVE',
+      prescribedDate: new Date('2025-10-10'),
+      patientId: pasien5.id,
+      recordId: record5.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Sucralfate',
+      dosage: '1g',
+      frequency: '3x sehari',
+      duration: '14 hari',
+      instructions: 'Diminum 1 jam sebelum makan',
+      status: 'COMPLETED',
+      prescribedDate: new Date('2025-09-10'),
+      patientId: pasien5.id,
+      recordId: record5.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Amoxicillin',
+      dosage: '500mg',
+      frequency: '3x sehari',
+      duration: '7 hari',
+      instructions: 'Diminum setelah makan, habiskan antibiotik',
+      status: 'CANCELLED',
+      prescribedDate: new Date('2025-10-01'),
+      patientId: pasien1.id,
+      recordId: record1.id,
+    },
+  });
+
+  await prisma.prescription.create({
+    data: {
+      medicationName: 'Paracetamol',
+      dosage: '500mg',
+      frequency: 'Sesuai kebutuhan',
+      duration: '7 hari',
+      instructions: 'Maksimal 3x sehari saat demam atau nyeri',
+      status: 'COMPLETED',
+      prescribedDate: new Date('2025-09-25'),
+      patientId: pasien2.id,
+      recordId: record2.id,
+    },
+  });
+
+  console.log('✅ Resep obat berhasil dibuat');
 
   // Seed Notifications (Notifikasi)
   await prisma.notification.create({

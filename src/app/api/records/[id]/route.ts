@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { verifyAuth, canEditRecords } from "@/lib/auth";
 
 const prisma = new PrismaClient();
 
@@ -46,6 +47,79 @@ export async function GET(
     console.error("Error fetching record:", error);
     return NextResponse.json(
       { error: "Failed to fetch record" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  // Verify authentication
+  const auth = await verifyAuth(req);
+
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check authorization (DOCTOR only)
+  if (!canEditRecords(auth.role)) {
+    return NextResponse.json(
+      { error: "Forbidden: Only doctors can edit records" },
+      { status: 403 }
+    );
+  }
+
+  const { id } = params;
+
+  try {
+    const body = await req.json();
+    const {
+      medicalHistory,
+      currentMedications,
+      allergies,
+      lastVisit,
+      nextAppointment,
+    } = body;
+
+    // Validate input
+    if (!medicalHistory || !currentMedications) {
+      return NextResponse.json(
+        {
+          error: "Medical history and current medications are required",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Parse dates
+    const parsedLastVisit = lastVisit ? new Date(lastVisit) : null;
+    const parsedNextAppointment = nextAppointment
+      ? new Date(nextAppointment)
+      : null;
+
+    // Update record
+    const updatedRecord = await prisma.record.update({
+      where: { id: parseInt(id) },
+      data: {
+        medicalHistory,
+        currentMedications,
+        allergies,
+        lastVisit: parsedLastVisit,
+        nextAppointment: parsedNextAppointment,
+      },
+    });
+
+    return NextResponse.json(updatedRecord, { status: 200 });
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "Record not found" }, { status: 404 });
+    }
+
+    console.error("Error updating record:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred" },
       { status: 500 }
     );
   }
