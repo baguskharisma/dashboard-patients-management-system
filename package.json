@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma migrate && next build",
+    "build": "prisma migrate && npm run prisma:seed && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:seed": "ts-node prisma/seed.js",
